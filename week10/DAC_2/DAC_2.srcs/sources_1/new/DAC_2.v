@@ -19,25 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module oneshot_universal(clk, rst, btn, btn_trig);
-parameter WIDTH = 1;
-input clk, rst;
-input[WIDTH-1:0] btn;
-reg [WIDTH-1:0] btn_reg;
-output reg [WIDTH-1:0] btn_trig;
 
-always @(negedge rst or posedge clk) begin
-if(!rst) begin
-btn_reg <= {WIDTH{1'b0}};
-btn_trig <= {WIDTH{1'b0}};
-end
-else begin
-btn_reg <= btn;
-btn_trig <= btn & ~btn_reg;
-end
-end
-endmodule
-
+// ===============================================================================
 
 module DAC_2(clk, rst, btn, add_sel, dac_csn, dac_ldacn, dac_wrn, dac_a_b, dac_d, led_out, seg_data, seg_sel);
 input clk, rst;
@@ -46,9 +29,9 @@ input add_sel;
 output reg dac_csn, dac_ldacn, dac_wrn, dac_a_b;
 output reg [7:0] dac_d;
 output reg [7:0] led_out;
-output reg [7:0] seg_data;
-output reg [7:0] seg_sel;
-reg [3:0] bcd;
+output [7:0] seg_data;
+output [7:0] seg_sel;
+
 reg [7:0] dac_d_temp;
 reg [7:0] cnt;
 wire [8:0] btn_t;
@@ -60,62 +43,8 @@ parameter DELAY   = 2'b00,
           UP_DATA = 2'b10;
           
 oneshot_universal #(.WIDTH(9)) O1(clk, rst, {btn[8:0]}, {btn_t[8:0]});
+seg7_controller s1(clk, rst, dac_d_temp[7:0], seg_data, seg_sel);
 
-always @(posedge clk or negedge rst) begin
-    if(!rst) seg_sel <= 8'b11111110;
-    else begin 
-        seg_sel <= {seg_sel[6:0], seg_sel[7]};
-    end
-end
-
-always @(*) begin
-if(dac_d_temp[0]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[1]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[2]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[3]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[4]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[5]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[6]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-if(dac_d_temp[7]==1)
-seg_data=8'b01100000;
-else
-seg_data=8'b11111100;
-end
-
-always @(*) begin
-    case(seg_sel)
-        8'b11111110 : bcd = dac_d_temp[0];
-        8'b11111101 : bcd = dac_d_temp[1];
-        8'b11111011 : bcd = dac_d_temp[2];
-        8'b11110111 : bcd = dac_d_temp[3];
-        8'b11101111 : bcd = dac_d_temp[4];
-        8'b11011111 : bcd = dac_d_temp[5];
-        8'b10111111 : bcd = dac_d_temp[6];
-        8'b01111111 : bcd = dac_d_temp[7];
-        default : bcd = 4'b0000;
-    endcase
-end
 
 always @(posedge clk or negedge rst) begin
     if(!rst) begin
@@ -189,4 +118,3 @@ always @(posedge clk) begin
     dac_a_b <= add_sel;
 end
 endmodule
-
